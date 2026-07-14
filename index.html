@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>Белот резултат</title>
+  <style>
+    :root {
+      --bg: #111;
+      --panel: #1b1b1b;
+      --panel-2: #242424;
+      --text: #f5f5f5;
+      --muted: #bdbdbd;
+      --border: #3a3a3a;
+      --danger: #3a1515;
+      --danger-border: #6b2525;
+      --ok: #14331f;
+      --ok-border: #236b39;
+      --wins-bg: #2b2109;
+      --wins-bg-2: #171107;
+      --wins-border: #b8862b;
+      --wins-text: #fff2bf;
+      --wins-muted: #ffd978;
+      --shadow: 0 16px 50px rgba(0, 0, 0, .45);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overscroll-behavior: none;
+    }
+
+    body {
+      min-height: 100svh;
+      font-size: clamp(24px, 7vw, 44px);
+    }
+
+    button {
+      font: inherit;
+    }
+
+    button {
+      width: 100%;
+      max-width: 100%;
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: .55em .45em;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.05;
+    }
+
+    button:active {
+      transform: scale(.985);
+    }
+
+    button:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .app {
+      min-height: 100svh;
+      display: grid;
+      grid-template-rows: auto auto auto auto 1fr auto;
+      gap: .45em;
+      padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .35em;
+      padding: .12em;
+      border: 2px solid rgba(184, 134, 43, .35);
+      border-radius: 26px;
+      background: linear-gradient(135deg, rgba(184, 134, 43, .22), rgba(0, 0, 0, 0));
+    }
+
+    .card {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      padding: .35em .25em;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .wins-card {
+      background:
+        radial-gradient(circle at top, rgba(255, 217, 120, .18), transparent 45%),
+        linear-gradient(180deg, var(--wins-bg), var(--wins-bg-2));
+      border: 3px solid var(--wins-border);
+      box-shadow: 0 14px 34px rgba(184, 134, 43, .18), var(--shadow);
+    }
+
+    .wins-card .label {
+      color: var(--wins-muted);
+      font-size: .44em;
+    }
+
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: .48em;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .wins-value,
+    .total-value {
+      display: block;
+      font-size: 1.28em;
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .wins-value {
+      color: var(--wins-text);
+      font-size: 1.45em;
+      text-shadow: 0 0 18px rgba(255, 217, 120, .25);
+    }
+
+    .totals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .35em;
+    }
+
+    .total-card {
+      padding: .28em .25em;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .35em;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: .18em;
+      text-align: center;
+      color: var(--muted);
+      font-size: .58em;
+      font-weight: 900;
+    }
+
+    .score-input {
+      min-height: 2.25em;
+      border: 3px solid var(--border);
+      border-radius: 24px;
+      background: #050505;
+      padding: .2em .25em;
+      font-size: clamp(46px, 17vw, 86px);
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .score-input.active {
+      border-color: var(--wins-border);
+      box-shadow: 0 0 0 4px rgba(184, 134, 43, .18), 0 0 24px rgba(184, 134, 43, .2);
+    }
+
+    .score-input:disabled {
+      opacity: .42;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .28em;
+    }
+
+    .keypad button {
+      min-height: 1.55em;
+      border-radius: 18px;
+      padding: .26em .2em;
+      background: #202020;
+      font-size: .88em;
+    }
+
+    .keypad .clear-key,
+    .keypad .backspace-key {
+      color: var(--muted);
+      font-size: .74em;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .35em;
+    }
+
+    .add {
+      background: var(--ok);
+      border-color: var(--ok-border);
+    }
+
+    .undo {
+      background: var(--danger);
+      border-color: var(--danger-border);
+    }
+
+    .table-wrap {
+      min-height: 0;
+      overflow: auto;
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      padding: .28em .2em;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #171717;
+      color: var(--muted);
+      font-size: .62em;
+      text-transform: uppercase;
+    }
+
+    td:first-child,
+    th:first-child {
+      width: 20%;
+      color: var(--muted);
+      font-size: .72em;
+    }
+
+    .empty {
+      padding: 1em .5em;
+      text-align: center;
+      color: var(--muted);
+      font-size: .75em;
+      font-weight: 800;
+    }
+
+    .footer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .35em;
+    }
+
+    .secondary {
+      font-size: .72em;
+      padding: .7em .4em;
+      color: var(--muted);
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      place-items: center;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      background: rgba(0, 0, 0, .93);
+    }
+
+    .overlay.show {
+      display: grid;
+    }
+
+    .winner-box {
+      width: min(100%, 560px);
+      max-width: 100%;
+      display: grid;
+      gap: .5em;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .winner-title {
+      margin: 0;
+      max-width: 100%;
+      font-size: clamp(42px, 13vw, 74px);
+      line-height: 1;
+      font-weight: 1000;
+      text-wrap: balance;
+      overflow-wrap: anywhere;
+      white-space: pre-line;
+    }
+
+    .winner-score {
+      color: var(--muted);
+      font-size: clamp(28px, 8vw, 48px);
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .next {
+      background: var(--ok);
+      border-color: var(--ok-border);
+      font-size: clamp(28px, 8vw, 42px);
+      min-height: 92px;
+    }
+
+    .overlay .undo {
+      font-size: clamp(24px, 7vw, 36px);
+      min-height: 92px;
+    }
+
+    .confirm {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, .88);
+    }
+
+    .confirm.show {
+      display: grid;
+    }
+
+    .confirm-box {
+      width: min(100%, 520px);
+      display: grid;
+      gap: .45em;
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 28px;
+      padding: .7em;
+      text-align: center;
+    }
+
+    .confirm-text {
+      margin: 0;
+      font-size: .85em;
+      font-weight: 900;
+    }
+
+    .confirm-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .35em;
+    }
+
+    @media (orientation: landscape) and (max-height: 520px) {
+      body {
+        font-size: clamp(18px, 5vw, 32px);
+      }
+
+      .app {
+        grid-template-rows: auto auto 1fr auto;
+      }
+
+      .totals {
+        order: 1;
+      }
+
+      .inputs {
+        order: 2;
+      }
+
+      .score-input {
+        font-size: clamp(34px, 9vw, 62px);
+      }
+
+      .keypad button {
+        min-height: 1.35em;
+        font-size: .78em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Белот резултат">
+    <section class="top" aria-label="Спечелени игри">
+      <div class="card wins-card">
+        <span class="label">Игри Ние</span>
+        <span class="wins-value" id="winsUs">0</span>
+      </div>
+      <div class="card wins-card">
+        <span class="label">Игри Вие</span>
+        <span class="wins-value" id="winsThem">0</span>
+      </div>
+    </section>
+
+    <section class="totals" aria-label="Общ резултат">
+      <div class="card total-card">
+        <span class="label">Ние</span>
+        <span class="total-value" id="totalUs">0</span>
+      </div>
+      <div class="card total-card">
+        <span class="label">Вие</span>
+        <span class="total-value" id="totalThem">0</span>
+      </div>
+    </section>
+
+    <section class="inputs" aria-label="Добавяне на раздаване">
+      <div class="field">
+        <label for="usInput">Ние</label>
+        <button class="score-input active" id="usInput" type="button" data-field="us" aria-label="Точки за Ние">0</button>
+      </div>
+      <div class="field">
+        <label for="themInput">Вие</label>
+        <button class="score-input" id="themInput" type="button" data-field="them" aria-label="Точки за Вие">0</button>
+      </div>
+    </section>
+
+    <section class="keypad" aria-label="Цифри">
+      <button type="button" data-key="1">1</button>
+      <button type="button" data-key="2">2</button>
+      <button type="button" data-key="3">3</button>
+      <button type="button" data-key="4">4</button>
+      <button type="button" data-key="5">5</button>
+      <button type="button" data-key="6">6</button>
+      <button type="button" data-key="7">7</button>
+      <button type="button" data-key="8">8</button>
+      <button type="button" data-key="9">9</button>
+      <button class="clear-key" type="button" data-key="clear">C</button>
+      <button type="button" data-key="0">0</button>
+      <button class="backspace-key" type="button" data-key="backspace">⌫</button>
+    </section>
+
+    <section class="actions" aria-label="Действия">
+      <button class="add" id="addBtn" type="button">Добави</button>
+      <button class="undo" id="undoBtn" type="button">Изтрий</button>
+    </section>
+
+    <section class="table-wrap" aria-label="Раздавания">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ние</th>
+            <th>Вие</th>
+          </tr>
+        </thead>
+        <tbody id="roundsBody"></tbody>
+      </table>
+      <div class="empty" id="emptyState">Няма раздавания</div>
+    </section>
+
+    <section class="footer" aria-label="Управление">
+      <button class="secondary" id="newGameBtn" type="button">Нова игра</button>
+      <button class="secondary" id="resetBtn" type="button">Нулирай</button>
+    </section>
+  </main>
+
+  <section class="overlay" id="winnerOverlay" aria-live="assertive" aria-label="Победител">
+    <div class="winner-box">
+      <h1 class="winner-title" id="winnerTitle">Победител</h1>
+      <div class="winner-score" id="winnerScore">0 : 0</div>
+      <button class="next" id="nextGameBtn" type="button">Следваща игра</button>
+      <button id="continueBtn" type="button">Продължи</button>
+      <button class="undo" id="overlayUndoBtn" type="button">Изтрий последното</button>
+    </div>
+  </section>
+
+  <section class="confirm" id="confirmBox" aria-label="Потвърждение">
+    <div class="confirm-box">
+      <p class="confirm-text" id="confirmText">Сигурни ли сте?</p>
+      <div class="confirm-actions">
+        <button id="confirmYes" class="undo" type="button">Да</button>
+        <button id="confirmNo" type="button">Не</button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const STORAGE_KEY = 'midalidare-belot-score-v1';
+    const TARGET = 151;
+
+    const defaultState = () => ({
+      wins: { us: 0, them: 0 },
+      currentGame: {
+        rounds: [],
+        winner: null,
+        winCounted: false
+      }
+    });
+
+    let state = loadState();
+    let pendingConfirm = null;
+    let dismissedTieKey = null;
+    let activeField = 'us';
+    let draft = { us: '', them: '' };
+
+    const els = {
+      winsUs: document.getElementById('winsUs'),
+      winsThem: document.getElementById('winsThem'),
+      totalUs: document.getElementById('totalUs'),
+      totalThem: document.getElementById('totalThem'),
+      usInput: document.getElementById('usInput'),
+      themInput: document.getElementById('themInput'),
+      addBtn: document.getElementById('addBtn'),
+      undoBtn: document.getElementById('undoBtn'),
+      roundsBody: document.getElementById('roundsBody'),
+      emptyState: document.getElementById('emptyState'),
+      newGameBtn: document.getElementById('newGameBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      winnerOverlay: document.getElementById('winnerOverlay'),
+      winnerTitle: document.getElementById('winnerTitle'),
+      winnerScore: document.getElementById('winnerScore'),
+      nextGameBtn: document.getElementById('nextGameBtn'),
+      continueBtn: document.getElementById('continueBtn'),
+      overlayUndoBtn: document.getElementById('overlayUndoBtn'),
+      confirmBox: document.getElementById('confirmBox'),
+      confirmText: document.getElementById('confirmText'),
+      confirmYes: document.getElementById('confirmYes'),
+      confirmNo: document.getElementById('confirmNo'),
+      keyButtons: document.querySelectorAll('[data-key]')
+    };
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!saved) return defaultState();
+
+        if (Array.isArray(saved.rounds)) {
+          return {
+            wins: {
+              us: Number(saved.winsUs) || 0,
+              them: Number(saved.winsThem) || 0
+            },
+            currentGame: {
+              rounds: saved.rounds.map(r => ({
+                us: Math.max(0, Number(r.us) || 0),
+                them: Math.max(0, Number(r.them) || 0)
+              })),
+              winner: saved.finishedGame && (saved.finishedGame.winner === 'us' || saved.finishedGame.winner === 'them') ? saved.finishedGame.winner : null,
+              winCounted: Boolean(saved.finishedGame)
+            }
+          };
+        }
+
+        if (!saved.wins || !saved.currentGame) return defaultState();
+        return {
+          wins: {
+            us: Number(saved.wins.us) || 0,
+            them: Number(saved.wins.them) || 0
+          },
+          currentGame: {
+            rounds: Array.isArray(saved.currentGame.rounds) ? saved.currentGame.rounds.map(r => ({
+              us: Math.max(0, Number(r.us) || 0),
+              them: Math.max(0, Number(r.them) || 0)
+            })) : [],
+            winner: saved.currentGame.winner === 'us' || saved.currentGame.winner === 'them' ? saved.currentGame.winner : null,
+            winCounted: Boolean(saved.currentGame.winCounted)
+          }
+        };
+      } catch (e) {
+        return defaultState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function totals() {
+      return state.currentGame.rounds.reduce((sum, round) => {
+        sum.us += round.us;
+        sum.them += round.them;
+        return sum;
+      }, { us: 0, them: 0 });
+    }
+
+    function getWinner(score) {
+      const usReached = score.us >= TARGET;
+      const themReached = score.them >= TARGET;
+
+      if (!usReached && !themReached) return null;
+      if (score.us > score.them) return 'us';
+      if (score.them > score.us) return 'them';
+      return null;
+    }
+
+    function isTie(score) {
+      return score.us >= TARGET && score.them >= TARGET && score.us === score.them;
+    }
+
+    function tieKey(score) {
+      return `${score.us}:${score.them}:${state.currentGame.rounds.length}`;
+    }
+
+    function syncWinState() {
+      const score = totals();
+      const newWinner = getWinner(score);
+      const oldWinner = state.currentGame.winner;
+
+      if (newWinner && !state.currentGame.winCounted) {
+        state.wins[newWinner] += 1;
+        state.currentGame.winner = newWinner;
+        state.currentGame.winCounted = true;
+        return;
+      }
+
+      if (!newWinner && state.currentGame.winCounted && oldWinner) {
+        state.wins[oldWinner] = Math.max(0, state.wins[oldWinner] - 1);
+        state.currentGame.winner = null;
+        state.currentGame.winCounted = false;
+        return;
+      }
+
+      if (newWinner && oldWinner && newWinner !== oldWinner) {
+        if (state.currentGame.winCounted) {
+          state.wins[oldWinner] = Math.max(0, state.wins[oldWinner] - 1);
+          state.wins[newWinner] += 1;
+        }
+        state.currentGame.winner = newWinner;
+        state.currentGame.winCounted = true;
+        return;
+      }
+
+      if (newWinner) {
+        state.currentGame.winner = newWinner;
+      }
+    }
+
+    function render() {
+      syncWinState();
+      const score = totals();
+      const locked = Boolean(state.currentGame.winner);
+      const tied = isTie(score);
+      const showTie = tied && dismissedTieKey !== tieKey(score);
+
+      els.winsUs.textContent = state.wins.us;
+      els.winsThem.textContent = state.wins.them;
+      els.totalUs.textContent = score.us;
+      els.totalThem.textContent = score.them;
+
+      els.addBtn.disabled = locked;
+      els.usInput.disabled = locked;
+      els.themInput.disabled = locked;
+      els.undoBtn.disabled = state.currentGame.rounds.length === 0;
+      els.overlayUndoBtn.disabled = state.currentGame.rounds.length === 0;
+      els.usInput.classList.toggle('active', activeField === 'us' && !locked);
+      els.themInput.classList.toggle('active', activeField === 'them' && !locked);
+      els.usInput.textContent = draft.us || '0';
+      els.themInput.textContent = draft.them || '0';
+      els.keyButtons.forEach(button => {
+        button.disabled = locked;
+      });
+
+      els.roundsBody.innerHTML = '';
+      state.currentGame.rounds.forEach((round, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${index + 1}</td><td>${round.us}</td><td>${round.them}</td>`;
+        els.roundsBody.appendChild(tr);
+      });
+      els.emptyState.style.display = state.currentGame.rounds.length ? 'none' : 'block';
+
+      if (locked) {
+        els.winnerTitle.textContent = `Победител\n${state.currentGame.winner === 'us' ? 'Ние' : 'Вие'}`;
+        els.winnerScore.textContent = `${score.us} : ${score.them}`;
+        els.nextGameBtn.style.display = 'block';
+        els.continueBtn.style.display = 'none';
+        els.winnerOverlay.classList.add('show');
+      } else if (showTie) {
+        els.winnerTitle.textContent = 'Равен резултат\nПродължете';
+        els.winnerScore.textContent = `${score.us} : ${score.them}`;
+        els.nextGameBtn.style.display = 'none';
+        els.continueBtn.style.display = 'block';
+        els.winnerOverlay.classList.add('show');
+      } else {
+        els.winnerOverlay.classList.remove('show');
+      }
+
+      saveState();
+    }
+
+    function readDraft(field) {
+      const value = Number(draft[field] || 0);
+      if (!Number.isFinite(value) || value < 0) return 0;
+      return Math.floor(value);
+    }
+
+    function clearInputs() {
+      draft = { us: '', them: '' };
+      activeField = 'us';
+      render();
+    }
+
+    function addRound() {
+      if (state.currentGame.winner) return;
+
+      const us = readDraft('us');
+      const them = readDraft('them');
+
+      if (us === 0 && them === 0) return;
+
+      state.currentGame.rounds.push({ us, them });
+      draft = { us: '', them: '' };
+      activeField = 'us';
+      render();
+    }
+
+    function setActiveField(field) {
+      if (state.currentGame.winner) return;
+      activeField = field;
+      render();
+    }
+
+    function pressKey(key) {
+      if (state.currentGame.winner) return;
+
+      if (key === 'clear') {
+        draft[activeField] = '';
+        render();
+        return;
+      }
+
+      if (key === 'backspace') {
+        draft[activeField] = draft[activeField].slice(0, -1);
+        render();
+        return;
+      }
+
+      if (!/^\d$/.test(key)) return;
+      if (draft[activeField].length >= 3) return;
+
+      const nextValue = `${draft[activeField]}${key}`.replace(/^0+(?=\d)/, '');
+      draft[activeField] = nextValue;
+      render();
+    }
+
+    function undoLast() {
+      if (!state.currentGame.rounds.length) return;
+      state.currentGame.rounds.pop();
+      render();
+    }
+
+    function startNextGame() {
+      state.currentGame = {
+        rounds: [],
+        winner: null,
+        winCounted: false
+      };
+      render();
+      clearInputs();
+    }
+
+    function askConfirm(text, action) {
+      pendingConfirm = action;
+      els.confirmText.textContent = text;
+      els.confirmBox.classList.add('show');
+    }
+
+    function closeConfirm() {
+      pendingConfirm = null;
+      els.confirmBox.classList.remove('show');
+    }
+
+    function resetAll() {
+      state = defaultState();
+      render();
+      clearInputs();
+    }
+
+    els.addBtn.addEventListener('click', addRound);
+    els.undoBtn.addEventListener('click', undoLast);
+    els.overlayUndoBtn.addEventListener('click', undoLast);
+    els.nextGameBtn.addEventListener('click', startNextGame);
+    els.continueBtn.addEventListener('click', () => {
+      dismissedTieKey = tieKey(totals());
+      els.winnerOverlay.classList.remove('show');
+    });
+
+    els.usInput.addEventListener('click', () => setActiveField('us'));
+    els.themInput.addEventListener('click', () => setActiveField('them'));
+    els.keyButtons.forEach(button => {
+      button.addEventListener('click', () => pressKey(button.dataset.key));
+    });
+
+    els.newGameBtn.addEventListener('click', () => {
+      if (!state.currentGame.rounds.length) {
+        startNextGame();
+        return;
+      }
+      askConfirm('Нова игра без да променяме победите?', startNextGame);
+    });
+
+    els.resetBtn.addEventListener('click', () => {
+      askConfirm('Да нулираме всичко?', resetAll);
+    });
+
+    els.confirmYes.addEventListener('click', () => {
+      const action = pendingConfirm;
+      closeConfirm();
+      if (typeof action === 'function') action();
+    });
+
+    els.confirmNo.addEventListener('click', closeConfirm);
+
+    render();
+  </script>
+</body>
+</html>
